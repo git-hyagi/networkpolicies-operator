@@ -1,0 +1,8 @@
+apiVersion: lab.local/v1
+kind: ForceNetPol
+metadata:
+  name: forcenetpol
+spec:
+  projects:
+  - test
+  - test2

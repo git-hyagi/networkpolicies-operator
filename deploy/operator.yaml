@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: networkpolicies-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: networkpolicies-operator
+  template:
+    metadata:
+      labels:
+        name: networkpolicies-operator
+    spec:
+      serviceAccountName: networkpolicies-operator
+      containers:
+        - name: networkpolicies-operator
+          image:  image-registry.openshift-image-registry.svc:5000/network-policies-operator/forcenetpol:v1
+          command:
+          - networkpolicies-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "networkpolicies-operator"
