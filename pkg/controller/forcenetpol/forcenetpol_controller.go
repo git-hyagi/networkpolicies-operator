@@ -94,7 +94,7 @@ func (r *ReconcileForceNetPol) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	for _, namespace := range instance.Spec.Projects {
-		netwpol := newNetworkPolicyForCR(namespace, "allow-from-same-namespace")
+		netwpol := networkPolicyAllowFromSameNamespace(namespace)
 
 		// Set this instance as the owner and controller of the new network policy object
 		if err := controllerutil.SetControllerReference(instance, netwpol, r.scheme); err != nil {
@@ -120,19 +120,7 @@ func (r *ReconcileForceNetPol) Reconcile(request reconcile.Request) (reconcile.R
 		}
 
 		// Check if it wasn't modified
-		expected_spec := netv1.NetworkPolicySpec{
-			Ingress: []netv1.NetworkPolicyIngressRule{
-				{
-					From: []netv1.NetworkPolicyPeer{
-						{
-							PodSelector: &metav1.LabelSelector{},
-						},
-					},
-				},
-			},
-			PodSelector: metav1.LabelSelector{},
-			PolicyTypes: []netv1.PolicyType{"Ingress"},
-		}
+		expected_spec := networkPolicyAllowFromSameNamespaceSpec()
 
 		if !reflect.DeepEqual(expected_spec, obj_type.Spec) {
 			reqLogger.Info("The NetworkPolicy allow-from-same-namespace is not matching the one from operator! Reconciling ...")
@@ -145,7 +133,7 @@ func (r *ReconcileForceNetPol) Reconcile(request reconcile.Request) (reconcile.R
 		}
 
 		/* BEGIN DENY-BY-DEFAULT */
-		netwpol = newNetworkPolicyForCR(namespace, "deny-by-default")
+		netwpol = networkPolicyDenyByDefault(namespace)
 
 		// Set this instance as the owner and controller of the new network policy object
 		if err = controllerutil.SetControllerReference(instance, netwpol, r.scheme); err != nil {
@@ -171,11 +159,7 @@ func (r *ReconcileForceNetPol) Reconcile(request reconcile.Request) (reconcile.R
 		}
 
 		// Check if it wasn't modified
-		expected_spec = netv1.NetworkPolicySpec{
-			Ingress:     []netv1.NetworkPolicyIngressRule{{}},
-			PodSelector: metav1.LabelSelector{},
-			PolicyTypes: []netv1.PolicyType{"Ingress"},
-		}
+		expected_spec = networkPolicyDenyByDefaultSpec()
 
 		if !reflect.DeepEqual(expected_spec, obj_type.Spec) {
 			reqLogger.Info("The NetworkPolicy deny-by-default is not matching the one from operator! Reconciling ...")
@@ -192,34 +176,35 @@ func (r *ReconcileForceNetPol) Reconcile(request reconcile.Request) (reconcile.R
 	return reconcile.Result{}, nil
 }
 
-func newNetworkPolicyForCR(project string, name string) *netv1.NetworkPolicy {
-
-	labels := map[string]string{
-		"operator": "force-netpol-operator",
-	}
-
-	if name == "deny-by-default" {
-		return &netv1.NetworkPolicy{
-			TypeMeta: metav1.TypeMeta{Kind: "NetworkPolicy", APIVersion: "extensions/v1beta"},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "deny-by-default",
-				Namespace: project,
-				Labels:    labels,
+// return a network policy object of "type" deny-by-default
+func networkPolicyDenyByDefault(project string) *netv1.NetworkPolicy {
+	return &netv1.NetworkPolicy{
+		TypeMeta: metav1.TypeMeta{Kind: "NetworkPolicy", APIVersion: "extensions/v1beta"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "deny-by-default",
+			Namespace: project,
+			Labels: map[string]string{
+				"operator": "force-netpol-operator",
 			},
-			Spec: netv1.NetworkPolicySpec{
-				Ingress:     []netv1.NetworkPolicyIngressRule{{}},
-				PodSelector: metav1.LabelSelector{},
-				PolicyTypes: []netv1.PolicyType{"Ingress"},
-			},
-		}
+		},
+		Spec: netv1.NetworkPolicySpec{
+			Ingress:     []netv1.NetworkPolicyIngressRule{{}},
+			PodSelector: metav1.LabelSelector{},
+			PolicyTypes: []netv1.PolicyType{"Ingress"},
+		},
 	}
+}
 
+// return a network policy object of "type" allow-from-same-namespace
+func networkPolicyAllowFromSameNamespace(project string) *netv1.NetworkPolicy {
 	return &netv1.NetworkPolicy{
 		TypeMeta: metav1.TypeMeta{Kind: "NetworkPolicy", APIVersion: "extensions/v1beta"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "allow-from-same-namespace",
 			Namespace: project,
-			Labels:    labels,
+			Labels: map[string]string{
+				"operator": "force-netpol-operator",
+			},
 		},
 		Spec: netv1.NetworkPolicySpec{
 			Ingress: []netv1.NetworkPolicyIngressRule{
@@ -234,5 +219,31 @@ func newNetworkPolicyForCR(project string, name string) *netv1.NetworkPolicy {
 			PodSelector: metav1.LabelSelector{},
 			PolicyTypes: []netv1.PolicyType{"Ingress"},
 		},
+	}
+}
+
+// expected spec for the allow-from-same-namespace network policy
+func networkPolicyAllowFromSameNamespaceSpec() netv1.NetworkPolicySpec {
+	return netv1.NetworkPolicySpec{
+		Ingress: []netv1.NetworkPolicyIngressRule{
+			{
+				From: []netv1.NetworkPolicyPeer{
+					{
+						PodSelector: &metav1.LabelSelector{},
+					},
+				},
+			},
+		},
+		PodSelector: metav1.LabelSelector{},
+		PolicyTypes: []netv1.PolicyType{"Ingress"},
+	}
+}
+
+// expected spec for the deny-by-default network policy
+func networkPolicyDenyByDefaultSpec() netv1.NetworkPolicySpec {
+	return netv1.NetworkPolicySpec{
+		Ingress:     []netv1.NetworkPolicyIngressRule{{}},
+		PodSelector: metav1.LabelSelector{},
+		PolicyTypes: []netv1.PolicyType{"Ingress"},
 	}
 }
