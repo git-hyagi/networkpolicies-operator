@@ -26,21 +26,22 @@ git@github.com:git-hyagi/networkpolicies-operator.git
 
 * Build it
 ~~~
+cd networkpolicies-operator
 operator-sdk build <registry address>/network-policies-operator/forcenetpol:v1
 ~~~
 
 * Push the built image to the registry
 ~~~
-docker push <registry address>/network-policies-operator/forcenetpol:v1     && \
+docker push <registry address>/network-policies-operator/forcenetpol:v1
 ~~~
 
 * Create the cluster objects
 ~~~
-oc create -f  networkpolicies-operator/deploy/crds/lab.local_forcenetpols_crd.yaml 
-oc create -f  networkpolicies-operator/deploy/service_account.yaml
-oc create -f  networkpolicies-operator/deploy/role.yaml
-oc create -f  networkpolicies-operator/deploy/rolebinding.yaml
-oc create -f  networkpolicies-operator/deploy/operator.yaml
+oc create -f  deploy/crds/lab.local_forcenetpols_crd.yaml 
+oc create -f  deploy/service_account.yaml
+oc create -f  deploy/role.yaml
+oc create -f  deploy/rolebinding.yaml
+oc create -f  deploy/operator.yaml
 ~~~
 
 * Create a **forcenetpol** `custom resource` with the projects that should have the `network policies`
