@@ -11,7 +11,7 @@ These two network policies together provide the same behavior as using the ovs-m
 It is developed using the [operator-framework](https://operatorframework.io/).
 
 # Pre-requisites
-- A running OpenShift 4.x cluster.
+- A cluster-admin access to a running OpenShift 4.x cluster
 - Access to the container registry used by the ocp cluster
 - git to clone this repo
 - The operator-sdk just to build this project (WIP push a working image to a public registry)
@@ -21,7 +21,7 @@ It is developed using the [operator-framework](https://operatorframework.io/).
 # Installing the networkpolicies-operator
 * Clone the networkpolicies-operator repo
 ~~~
-git@github.com:git-hyagi/networkpolicies-operator.git
+git clone git@github.com:git-hyagi/networkpolicies-operator.git
 ~~~
 
 * Build it
@@ -37,6 +37,7 @@ docker push <registry address>/network-policies-operator/forcenetpol:v1
 
 * Create the cluster objects
 ~~~
+oc new-project network-policies-operator
 oc create -f  deploy/crds/lab.local_forcenetpols_crd.yaml 
 oc create -f  deploy/service_account.yaml
 oc create -f  deploy/role.yaml
