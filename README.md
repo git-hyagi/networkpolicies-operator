@@ -61,4 +61,7 @@ oc create -f  lab.local_v1_forcenetpol_cr.yaml
 ~~~
 
 # Configuring the labels-operator
-[WIP]
+For now, the only configuration available is to add or remove projects from the **forcenetpol** `custom resource` which will, in turn, sync or not the `network policies` (*allow-from-same-namespace* and *deny-by-default*):
+~~~
+oc edit forcenetpol forcenetpol
+~~~
