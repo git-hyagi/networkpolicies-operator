@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	labv1 "github.com/lab/networkpolicies-operator/pkg/apis/lab/v1"
+	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,6 +95,23 @@ func (r *ReconcileForceNetPol) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	for _, namespace := range instance.Spec.Projects {
+
+		// check if namespace declared in ForceNetPol exists
+		nsList := &corev1.NamespaceList{}
+		err = r.client.List(context.TODO(), nsList)
+		foundNS := false
+		for _, namespaces := range nsList.Items {
+			if namespaces.Name == namespace {
+				foundNS = true
+				break
+			}
+		}
+
+		// if the namespace is not found, just skip the rest of loop instructions (do nothing for this namespace)
+		if !foundNS {
+			continue
+		}
+
 		netwpol := networkPolicyAllowFromSameNamespace(namespace)
 
 		// Set this instance as the owner and controller of the new network policy object
